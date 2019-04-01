@@ -9,32 +9,35 @@
         <!-- production version, optimized for size and speed -->
         <!-- script src="https://cdn.jsdelivr.net/npm/vue"></script -->
         <style>
-.timetable {
-    display: flex;
-    overflow-x: auto;
-}
-.day {
-    margin: 0.3rem;
-}
-.period, .head {
-    width: 10rem;
-    height: 5rem;
-    margin: 0.3rem;
-}
-.free {
-    background: lightgreen;
-}
-.booked {
-    background: lightpink;
-}
-.head {
-    background: lightskyblue;
-    background: lightblue;
-}
+            .timetable {
+                display: flex;
+                overflow-x: auto;
+            }
+            .day {
+                margin: 0.3rem;
+            }
+            .period, .head {
+                width: 10rem;
+                height: 5rem;
+                margin: 0.3rem;
+            }
+            .free {
+                background: lightgreen;
+            }
+            .booked {
+                background: lightpink;
+            }
+            .me {
+                background: lightskyblue;
+            }
+            .head {
+                background: lightblue;
+            }
         </style>
     </head>
     <body>
         {% raw %}
+            <a href="/">Zurück zur Übersicht</a>
             <div id="timetable">
                 <button @click="week_offset -= 1 ; get_room();">←</button>
                 <button @click="week_offset=0;get_room();">⌂</button>
@@ -49,7 +52,7 @@
                         </div>
                         <div v-for="period,j in day.periods">
                             <div v-if="period.person == user"
-                                 class="period booked"
+                                 class="period me"
                                  @click="cancel_room(period.ID)">
                                 {{j+1}}
                                  - {{period.person}}
