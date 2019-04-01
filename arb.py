@@ -68,11 +68,12 @@ class Booking(db.Model):
 
 # DB controller
 def booking_book(person, room_id, iso_date, period):
+    y,m,d = map(int,iso_date.split('-')) 
     db.session.add(
             Booking(
                 person=person,
                 room_id=room_id,
-                date = Date.fromisoformat(iso_date),
+                date = Date(y,m,d),
                 period=period
                 )
             )
@@ -94,9 +95,10 @@ def booking_cancel(ID, user):
     return True
 
 def _booking_cancel(person, room_id, iso_date, period):
+    y,m,d = map(int,iso_date.split('-')) 
     booking = Booking.query.filter_by(
             room_id=room_id,
-            date=Date.fromisoformat(iso_date),
+            date=Date(y,m,d),
             person=person,
             period=period
     ).first()
