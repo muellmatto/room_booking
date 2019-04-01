@@ -39,7 +39,7 @@
         {% raw %}
             <div id="app" class="cards">
                 <div v-for="room in rooms" class="card">
-                    <a v-bind:href="'/room/'+room.ID" @click="choose_room">
+                    <a v-bind:href="'/room/'+room.ID">
                         <h3>{{ room.title }}</h3>
                         <p>{{ room.location }}</p>
                     </a>
@@ -60,7 +60,7 @@
                 methods: {
                     get_rooms: function () {
                         let vueapp = this; // fuck js!
-                        fetch('/rest/room')
+                        fetch('/rest/room', {credentials: 'same-origin'})
                             .then(
                                 function(res) {
                                     return res.json()
@@ -72,9 +72,6 @@
                                 }
                             )
                     },
-                    choose_room: function (){
-                        console.log('clicked');
-                    }
                 },
                 mounted: function() {this.get_rooms()} 
             })

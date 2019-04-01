@@ -91,7 +91,7 @@
                 methods: {
                     get_room: function () {
                         let vueapp = this; // fuck js!
-                        fetch('/rest/room/' + this.ID + '/week_offset/' + this.week_offset)
+                        fetch('/rest/room/' + this.ID + '/week_offset/' + this.week_offset,  {credentials: 'same-origin'})
                             .then(
                                 function(res) {
                                     return res.json()
@@ -114,6 +114,7 @@
                             '/rest/room/' + this.ID,
                             {
                                 method: "POST",
+                                credentials: "same-origin",
                                 headers : {
                                     "Content-Type": "application/json",
                                 },
@@ -138,6 +139,7 @@
                             '/rest/room/' + ID,
                             {
                                 method: "DELETE",
+                                credentials: "same-origin",
                             }
                         ).then(
                             function(res) {
