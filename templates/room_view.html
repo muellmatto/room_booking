@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="de">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+        <title>ARB</title>
+        <!-- development version, includes helpful console warnings -->
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+        <!-- production version, optimized for size and speed -->
+        <!-- script src="https://cdn.jsdelivr.net/npm/vue"></script -->
+        <style>
+.timetable {
+    display: flex;
+    overflow-x: auto;
+}
+.day {
+    margin: 0.3rem;
+}
+.period, .head {
+    width: 10rem;
+    height: 5rem;
+    margin: 0.3rem;
+}
+.free {
+    background: lightgreen;
+}
+.booked {
+    background: lightpink;
+}
+.head {
+    background: lightskyblue;
+    background: lightblue;
+}
+        </style>
+    </head>
+    <body>
+        {% raw %}
+            <div id="timetable">
+                <button @click="week_offset -= 1 ; get_room();">←</button>
+                <button @click="week_offset=0;get_room();">⌂</button>
+                <button @click="week_offset += 1; get_room();">→</button>
+                <hr>
+                <div class="timetable">
+                    <div class="day" v-for="day,i in room.timetable">
+                        <div class="head">
+                            {{day.date}}
+                            <br>
+                            {{day_names[i]}}
+                        </div>
+                        <div v-for="period,j in day.periods">
+                            <div v-if="period.person == user"
+                                 class="period booked"
+                                 @click="cancel_room(period.ID)">
+                                {{j+1}}
+                                 - {{period.person}}
+                                <br>
+                                (cancel)
+                            </div>
+                            <div v-if="period.ID && period.person != user"
+                                 class="period booked">
+                                {{j+1}}
+                                 - {{period.person}}
+                            </div>
+                            <div v-if="!period.person" class="period free"
+                                @click="book_room(day.date, j+1)">
+                                {{j+1}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endraw %}
+        <script>
+            var app = new Vue({
+                el: '#timetable',
+                data: {
+                    room: [],
+                    ID: {{ID}}, 
+                    user: "{{user}}",
+                    week_offset: 0,
+                    day_names: [
+                        'MO',
+                        'DI',
+                        'MI',
+                        'DO',
+                        'FR',
+                        'SA',
+                        'SO',
+                    ],
+                },
+                methods: {
+                    get_room: function () {
+                        let vueapp = this; // fuck js!
+                        fetch('/rest/room/' + this.ID + '/week_offset/' + this.week_offset)
+                            .then(
+                                function(res) {
+                                    return res.json()
+                                }
+                            )
+                            .then(
+                                function(data) {
+                                    console.log(data.timetable);
+                                    vueapp.room = data;
+                                }
+                            )
+                    },
+                    choose_room: function (){
+                        console.log('clicked');
+                    },
+                    book_room: function (iso_date, period){
+                        let vueapp = this; // fuck js!
+                        let data = {period: period, iso_date: iso_date}
+                        fetch (
+                            '/rest/room/' + this.ID,
+                            {
+                                method: "POST",
+                                headers : {
+                                    "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify(data)
+                            }
+                        ).then(
+                            function(res) {
+                                return res.json()
+                            }
+                        ).then(
+                            function(ans) {
+                                if (!ans) {
+                                    alert('sorry, slot already taken!')
+                                };
+                                vueapp.get_room();
+                            }
+                        )
+                    },
+                    cancel_room: function(ID){
+                        let vueapp = this; // fuck js!
+                        fetch (
+                            '/rest/room/' + ID,
+                            {
+                                method: "DELETE",
+                            }
+                        ).then(
+                            function(res) {
+                                return res.json()
+                            }
+                        ).then(
+                            function(ans) {
+                                if (!ans) {
+                                    alert('sorry, this didnt work :(!')
+                                };
+                                vueapp.get_room();
+                            }
+                        )
+                    },
+                },
+                mounted: function() { this.get_room(); } 
+            })
+        </script>
+    </body>
+</html>

@@ -1,6 +1,10 @@
-from datetime import date as Date
+from datetime import (
+        date as Date,
+        timedelta
+)
 from functools import wraps
 from imaplib import IMAP4_SSL
+from math import floor
 from os.path import dirname, exists, join, realpath, isfile, isdir
 from os import listdir, mkdir, remove, rmdir
 from sys import exit
@@ -8,6 +12,7 @@ from urllib.parse import unquote
 
 from flask import (
         Flask,
+        jsonify,
         request,
         session, 
         redirect,
@@ -15,7 +20,8 @@ from flask import (
         url_for
         )
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.exc import InvalidRequestError
+from sqlalchemy import and_
+from sqlalchemy.exc import IntegrityError
 from qrcode import make as make_qrcode
 
 try:
@@ -41,6 +47,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + DB_PATH
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+# DB Model
 class Room(db.Model):
     ID = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(), nullable=False)
@@ -57,7 +64,10 @@ class Booking(db.Model):
     room_id = db.Column(db.Integer, db.ForeignKey('room.ID'), nullable=False)
     person = db.Column(db.String(), nullable=False)
 
-def book(person, room_id, iso_date, period):
+#
+
+# DB controller
+def booking_book(person, room_id, iso_date, period):
     db.session.add(
             Booking(
                 person=person,
@@ -69,9 +79,123 @@ def book(person, room_id, iso_date, period):
     try:
         db.session.commit()
         return True
-    except InvalidRequestError:
+    except IntegrityError:
+        db.session.rollback()
         return False
 
+def booking_cancel(ID, user):
+    booking = Booking.query.filter_by(ID=ID).first()
+    if booking is None:
+        return False
+    if not booking.person == user:
+        return False
+    db.session.delete(booking)
+    db.session.commit()
+    return True
+
+def _booking_cancel(person, room_id, iso_date, period):
+    booking = Booking.query.filter_by(
+            room_id=room_id,
+            date=Date.fromisoformat(iso_date),
+            person=person,
+            period=period
+    ).first()
+    if booking is None:
+        return False
+    db.session.remove(booking)
+    db.session.commit()
+    return True
+
+def _get_week_range(offset=0):
+    today = Date.today()
+    start_day = today - timedelta(today.isoweekday()-1 - offset*7)
+    end_day = today - timedelta(today.isoweekday()-7 - offset*7)
+    days = [(start_day + timedelta(i)).isoformat() for i in range(7)]
+    return {"today": today, "start": start_day, "end": end_day, "days": days}
+
+def _booking_get(room_id, start, end):
+    booking = Booking.query.filter(
+            and_(
+                Booking.date.between(start, end),
+                Booking.room_id == room_id
+                )
+            ).all()
+    booking = [
+            {
+                'ID': b.ID,
+                'date': b.date.isoformat(),
+                'day_num': b.date.isoweekday(),
+                'period': b.period,
+                'room_id': b.room_id,
+                'person': b.person
+            }
+    for b in booking]
+    return booking
+
+def get_week_data(room_id, week_offset=0):
+    week = _get_week_range(week_offset)                
+    # bookings = _booking_get(room_id, week['start'], week['end'])
+    # week['bookings'] = bookings
+    data = [ 
+            {
+                'day_num': i+1,
+                'date': day,
+                'periods' : [ {} for _ in range(11)]
+            } 
+    for i,day in enumerate(week['days'])]
+    for b in _booking_get(room_id, week['start'], week['end']):
+        day_num = b['day_num'] - 1 # list index begins with 0
+        period = b['period'] - 1 # ...
+        data[day_num]['periods'][period] = b
+    return {'timetable': data, 'today': week['today'].isoformat() }
+    # return {"days": week['days'], "today": week['today'].isoformat(), "bookings": bookings, "week_offset": week_offset }
+
+def booking_getall():
+    bookings = Booking.query.all()
+    return bookings
+
+def room_edit(form_dict):
+    ID = form.pop('ID')
+    room = Room.query.filter_by(ID=ID).first()
+    for key, value in form.items():
+        setattr(room, key, value)
+    db.session.add(room)
+    db.session.commit()
+
+def room_delete(ID):
+    room = Room.query.filter_by(ID=ID).first()
+    db.session.remove(room)
+    db.session.commit()
+
+def room_add(name):
+    db.session.add(Room(title=name))
+    db.session.commit()
+
+def room_get(ID=None):
+    if ID is None:
+        return room_getall()
+    room = Room.query.filter_by(ID=ID).first()
+    room = {
+            "ID": room.ID,
+            "title": room.title,
+            "location": room.location,
+            "description": room.description
+    }
+    return room
+
+def room_getall():
+    rooms = Room.query.all()
+    rooms = [
+                {
+                    "ID": room.ID,
+                    "title": room.title,
+                    "location": room.location
+                }
+            for room in rooms
+    ]
+    return rooms
+
+# session controller
 def imap_auth(username, password):
     username = username.lower()
     if not username.endswith(allowed_domain):
@@ -95,12 +219,14 @@ def admin_only(wrapped):
 
 def logged_in(wrapped):
     @wraps(wrapped)
-    def _request(*args, **kwargs):
+    def arb_request(*args, **kwargs):
+        print('wat?')
+        print(session)
         if 'user' in session:
             return wrapped(*args, **kwargs)
         else:
             return redirect(url_for('login'))
-    return _request
+    return arb_request
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -141,54 +267,53 @@ def logout():
     return redirect(url_for('home'))
 
 @app.route('/')
+@logged_in
 def home():
-    return 'home'
+    return redirect(url_for('view_rooms')) 
 
+@app.route('/rooms')
 @logged_in
-@app.route('/show/<ID>')
-def show_room(ID):
-    return 'showing {}'.format(ID)
+def view_rooms():
+    return render_template('rooms_view.html')
 
+@app.route('/room/<ID>')
 @logged_in
-@app.route('/book/<ID>', methods=['POST'])
+def view_room(ID):
+    user = session['user']
+    return render_template('room_view.html', ID=ID, user=user)
+
+@app.route('/rest/room')
+@logged_in
+def rest_rooms():
+    return jsonify(room_getall())
+
+@app.route('/rest/room/<int:room_id>/week_offset/<week_offset>', methods=['GET'])
+@logged_in
+def rest_room_booking(room_id,week_offset):
+    week_offset = int(week_offset)
+    return jsonify(get_week_data(room_id=room_id, week_offset=week_offset))
+
+@app.route('/rest/room/<ID>', methods=['POST'])
+@logged_in
 def book_room(ID):
-    period = request.form.get('period')
-    iso_date = request.form.get('iso_date')
+    j = request.get_json()
+    period = j['period']
+    iso_date = j['iso_date']
     person = session['user']
-    if book(person=person, room_id=ID, iso_date=iso_date, period=period):
-        return 'booked {}!'.format(ID)
-    return 'not booked {}'.format(ID)
+    if booking_book(person=person, room_id=ID, iso_date=iso_date, period=period):
+        return jsonify(True)
+    return jsonify(False)
+
+@app.route('/rest/room/<ID>', methods=['DELETE'])
+@logged_in
+def cancel_room(ID):
+    user = session['user']
+    return jsonify(booking_cancel(ID, user))
 
 @admin_only
 @app.route('/admin')
 def admin():
     return 'admin'
-
-@admin_only
-@app.route('/admin/room')
-def room_list():
-    return 'rooms'
-
-@admin_only
-@app.route('/admin/room/add', methods=['PUT'])
-def room_add():
-    return 'add rooms'
-
-@admin_only
-@app.route('/admin/room/del/<ID>')
-def room_del(ID):
-    return 'delete {}'.format(ID)
-
-@admin_only
-@app.route('/admin/room/get/<ID>')
-def room_get(ID):
-    return 'room {}'.format(ID)
-
-@admin_only
-@app.route('/admin/roomt/edit/<ID>')
-def room_edit(ID):
-    return 'edit {}'.format(ID)
-
 # we may need this:
 def qr():
     url_quoted = request.args.get('url')
@@ -198,3 +323,6 @@ def qr():
     qr.save(output, format="PNG")
     output.seek(0)
     return send_file(output, mimetype="image/png")
+
+if __name__ == '__main__':
+    app.run(host='localhost', port=8000, debug=True)
