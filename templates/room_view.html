@@ -41,9 +41,11 @@
                 margin: 0.3rem;
                 box-sizing: border-box;
                 padding: 0.2rem;
+                border-radius: 0.2rem;
             }
             .free {
                 background: #90ee90;
+                border-style: outset;
             }
             .booked {
                 background: #ffb6c1;
@@ -53,6 +55,7 @@
             }
             .head {
                 background: #add8e6;
+                font-weight: 900;
             }
         </style>
     </head>
@@ -68,7 +71,7 @@
                 <div class="timetable">
                     <div class="day" v-for="day,i in room.timetable">
                         <div class="head">
-                            {{day.date}}
+                            {{day.date | datum}}
                             <br>
                             {{day_names[i]}}
                         </div>
@@ -77,14 +80,16 @@
                                  class="period me"
                                  @click="cancel_room(period.ID)">
                                 {{j+1}}
-                                 - {{period.person}}
+                                <br>
+                                {{ period.person | username }}
                                 <br>
                                 (cancel)
                             </div>
                             <div v-if="period.ID && period.person != user"
                                  class="period booked">
                                 {{j+1}}
-                                 - {{period.person}}
+                                <br>
+                                 - {{ period.person | username }}
                             </div>
                             <div v-if="!period.person" class="period free"
                                 @click="book_room(day.date, j+1)">
@@ -180,7 +185,19 @@
                         )
                     },
                 },
-                mounted: function() { this.get_room(); } 
+                mounted: function() { this.get_room(); },
+                filters: {
+                    username: function (x) {
+                        let temp = x.split('@')[0];
+                        return temp
+                    },
+                    datum: function (x) {
+                        let temp = x.split('-');
+                        temp.reverse();
+                        temp = temp.join('.');
+                        return temp
+                    },
+                },
             })
         </script>
     </body>
