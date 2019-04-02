@@ -8,7 +8,15 @@
         <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
         <!-- production version, optimized for size and speed -->
         <!-- script src="https://cdn.jsdelivr.net/npm/vue"></script -->
+        <link href="https://fonts.googleapis.com/css?family=Heebo" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Roboto+Slab" rel="stylesheet">
         <style>
+            * {
+                font-family: 'Roboto Slab', serif;
+            }
+            h1, h2, h3, h4 {
+                font-family: 'Heebo', sans-serif;
+            }
             .cards {
             }
             .card {
@@ -38,24 +46,19 @@
     <body>
         {% raw %}
             <div id="app" class="cards">
-                <div v-for="room in rooms" class="card">
-                    <a v-bind:href="'/room/'+room.ID">
+                <a v-for="room in rooms" v-bind:href="'/room/'+room.ID">
+                    <div class="card">
                         <h3>{{ room.title }}</h3>
                         <p>{{ room.location }}</p>
-                    </a>
-                </div>
+                    </div>
+                </a>
             </div>
         {% endraw %}
         <script>
             var app = new Vue({
                 el: '#app',
                 data: {
-                    rooms: [
-                        {
-                            title: 'example',
-                            location: 'nowhere'
-                        }
-                    ],
+                    rooms: [],
                 },
                 methods: {
                     get_rooms: function () {

@@ -149,7 +149,7 @@ def get_week_data(room_id, week_offset=0):
         day_num = b['day_num'] - 1 # list index begins with 0
         period = b['period'] - 1 # ...
         data[day_num]['periods'][period] = b
-    return {'timetable': data, 'today': week['today'].isoformat() }
+    return {'timetable': data, 'today': week['today'].isoformat(), 'name': room_get(room_id)['title'] }
     # return {"days": week['days'], "today": week['today'].isoformat(), "bookings": bookings, "week_offset": week_offset }
 
 def booking_getall():
@@ -222,8 +222,6 @@ def admin_only(wrapped):
 def logged_in(wrapped):
     @wraps(wrapped)
     def arb_request(*args, **kwargs):
-        print('wat?')
-        print(session)
         if 'user' in session:
             return wrapped(*args, **kwargs)
         else:
