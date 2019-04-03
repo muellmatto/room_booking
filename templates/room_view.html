@@ -67,6 +67,7 @@
                 <button @click="week_offset -= 1 ; get_room();">←</button>
                 <button @click="week_offset=0;get_room();">⌂</button>
                 <button @click="week_offset += 1; get_room();">→</button>
+                <span style="fontsize: 1.2rem; font-weight: bold;">KW: {{room.week_num}}</span>
                 <hr>
                 <div class="timetable">
                     <div class="day" v-for="day,i in room.timetable">

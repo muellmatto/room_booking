@@ -151,7 +151,7 @@ def get_week_data(room_id, week_offset=0):
         day_num = b['day_num'] - 1 # list index begins with 0
         period = b['period'] - 1 # ...
         data[day_num]['periods'][period] = b
-    return {'timetable': data, 'today': week['today'].isoformat(), 'name': room_get(room_id)['title'] }
+    return {'timetable': data, 'today': week['today'].isoformat(), 'name': room_get(room_id)['title'], 'week_num': week['start'].isocalendar()[1] }
     # return {"days": week['days'], "today": week['today'].isoformat(), "bookings": bookings, "week_offset": week_offset }
 
 def booking_getall():
