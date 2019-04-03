@@ -12,6 +12,7 @@ from urllib.parse import unquote
 
 from flask import (
         Flask,
+        flash,
         jsonify,
         request,
         session, 
@@ -51,9 +52,9 @@ db = SQLAlchemy(app)
 class Room(db.Model):
     ID = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(), nullable=False)
-    location = db.Column(db.String())
-    description = db.Column(db.String())
-    bookings = db.relationship('Booking', backref='Booking', lazy=True)
+    location = db.Column(db.String(), default='')
+    description = db.Column(db.String(), default='')
+    bookings = db.relationship('Booking', backref='Booking', lazy=True, cascade='all, delete-orphan')
 
 class Booking(db.Model):
     __table_args__ = (db.UniqueConstraint('date', 'period', 'room_id'),) # must be a tuple
@@ -65,6 +66,13 @@ class Booking(db.Model):
     person = db.Column(db.String(), nullable=False)
 
 #
+def _db_commit():
+    try:
+        db.session.commit()
+        return True
+    except IntegrityError:
+        db.session.rollback()
+        return False
 
 # DB controller
 def booking_book(person, room_id, iso_date, period):
@@ -77,12 +85,7 @@ def booking_book(person, room_id, iso_date, period):
                 period=period
                 )
             )
-    try:
-        db.session.commit()
-        return True
-    except IntegrityError:
-        db.session.rollback()
-        return False
+    return _db_commit()
 
 def booking_cancel(ID, user):
     booking = Booking.query.filter_by(ID=ID).first()
@@ -91,8 +94,7 @@ def booking_cancel(ID, user):
     if not booking.person == user:
         return False
     db.session.delete(booking)
-    db.session.commit()
-    return True
+    return _db_commit()
 
 def _booking_cancel(person, room_id, iso_date, period):
     y,m,d = map(int,iso_date.split('-')) 
@@ -157,17 +159,19 @@ def booking_getall():
     return bookings
 
 def room_edit(form_dict):
-    ID = form.pop('ID')
+    ID = form_dict.pop('room_id')
     room = Room.query.filter_by(ID=ID).first()
-    for key, value in form.items():
+    for key, value in form_dict.items():
         setattr(room, key, value)
     db.session.add(room)
-    db.session.commit()
+    return _db_commit()
 
 def room_delete(ID):
     room = Room.query.filter_by(ID=ID).first()
-    db.session.remove(room)
-    db.session.commit()
+    if room is None:
+        return False
+    db.session.delete(room)
+    return _db_commit()
 
 def room_add(name):
     db.session.add(Room(title=name))
@@ -191,7 +195,8 @@ def room_getall():
                 {
                     "ID": room.ID,
                     "title": room.title,
-                    "location": room.location
+                    "location": room.location,
+                    "description": room.description
                 }
             for room in rooms
     ]
@@ -310,11 +315,29 @@ def cancel_room(ID):
     user = session['user']
     return jsonify(booking_cancel(ID, user))
 
+@app.route('/admin', methods=['GET', 'POST'])
 @admin_only
-@app.route('/admin')
 def admin():
-    return 'admin'
+    if request.method == 'POST':
+        form = dict(request.form)
+        action = form.pop('action', None)
+        if action == 'edit':
+            success = room_edit(form_dict=form)
+        elif action == 'delete':
+            room_id = form.pop('room_id')
+            success = room_delete(room_id)
+            if success:
+                flash('gelöscht')
+            else:
+                flash('Raum wurde nicht gelöscht.')
+        elif action == 'create':
+            title = form.pop('title')
+            success = room_add(title)
+    return render_template('admin.html', rooms=room_getall())
+
 # we may need this:
+@app.route('/admin/qr')
+@admin_only
 def qr():
     url_quoted = request.args.get('url')
     qr_content = unquote(url_quoted)
