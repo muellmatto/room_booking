@@ -90,7 +90,7 @@
                                  class="period booked">
                                 {{j+1}}
                                 <br>
-                                 - {{ period.person | username }}
+                                 {{ period.person | username }}
                             </div>
                             <div v-if="!period.person" class="period free"
                                 @click="book_room(day.date, j+1)">
@@ -190,6 +190,11 @@
                 filters: {
                     username: function (x) {
                         let temp = x.split('@')[0];
+                        temp = temp.split('.')
+                        for (let i in temp) {
+                            temp[i] = temp[i][0].toUpperCase() + temp[i].slice(1);
+                        }
+                        temp = temp.join('.')
                         return temp
                     },
                     datum: function (x) {
