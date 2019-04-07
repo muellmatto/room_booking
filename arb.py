@@ -4,6 +4,7 @@ from datetime import (
 )
 from functools import wraps
 from imaplib import IMAP4_SSL
+from json import dumps as dump_json
 from math import floor
 from os.path import dirname, exists, join, realpath, isfile, isdir
 from os import listdir, mkdir, remove, rmdir
@@ -23,6 +24,7 @@ from flask import (
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import and_
 from sqlalchemy.exc import IntegrityError
+from flask_socketio import SocketIO, send
 from qrcode import make as make_qrcode
 
 try:
@@ -47,6 +49,8 @@ DB_PATH = join(PATH, 'arb.sqlite3')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + DB_PATH
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+socketio = SocketIO(app)
 
 # DB Model
 class Room(db.Model):
@@ -90,25 +94,11 @@ def booking_book(person, room_id, iso_date, period):
 def booking_cancel(ID, user):
     booking = Booking.query.filter_by(ID=ID).first()
     if booking is None:
-        return False
+        return False, -1
     if not booking.person == user:
-        return False
+        return False, -1
     db.session.delete(booking)
-    return _db_commit()
-
-def _booking_cancel(person, room_id, iso_date, period):
-    y,m,d = map(int,iso_date.split('-')) 
-    booking = Booking.query.filter_by(
-            room_id=room_id,
-            date=Date(y,m,d),
-            person=person,
-            period=period
-    ).first()
-    if booking is None:
-        return False
-    db.session.remove(booking)
-    db.session.commit()
-    return True
+    return _db_commit(), booking.room_id
 
 def _get_week_range(offset=0):
     today = Date.today()
@@ -306,6 +296,7 @@ def book_room(ID):
     iso_date = j['iso_date']
     person = session['user']
     if booking_book(person=person, room_id=ID, iso_date=iso_date, period=period):
+        socketio.emit('update', {'room_id': ID}, json=True)
         return jsonify(True)
     return jsonify(False)
 
@@ -313,7 +304,15 @@ def book_room(ID):
 @logged_in
 def cancel_room(ID):
     user = session['user']
-    return jsonify(booking_cancel(ID, user))
+    success, room_id = booking_cancel(ID, user)
+    if success:
+        socketio.emit('update', {'room_id': room_id}, json=True)
+        return jsonify(True)
+    return jsonify(False)
+
+@socketio.on('update')
+def socket_update(data):
+    print(data)
 
 @app.route('/admin', methods=['GET', 'POST'])
 @admin_only
@@ -348,4 +347,4 @@ def qr():
     return send_file(output, mimetype="image/png")
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=8000, debug=True)
+    socketio.run(app, host='localhost', port=8000, debug=True)

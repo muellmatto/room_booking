@@ -5,10 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
         <title>ARB</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='arb.css') }}" type="text/css">
-        <!-- development version, includes helpful console warnings -->
         <script src="{{ url_for('static', filename='vue.js') }}"></script>
-        <!-- production version, optimized for size and speed -->
-        <!-- script src="https://cdn.jsdelivr.net/npm/vue"></script -->
+        <script src="{{ url_for('static', filename='socket.io.js') }}"></script>
     </head>
     <body>
         {% raw %}
@@ -69,6 +67,7 @@
                         'SA',
                         'SO',
                     ],
+                    socket: io(),
                 },
                 methods: {
                     get_room: function () {
@@ -81,16 +80,11 @@
                             )
                             .then(
                                 function(data) {
-                                    console.log(data.timetable);
                                     vueapp.room = data;
                                 }
                             )
                     },
-                    choose_room: function (){
-                        console.log('clicked');
-                    },
                     book_room: function (iso_date, period){
-                        let vueapp = this; // fuck js!
                         let data = {period: period, iso_date: iso_date}
                         fetch (
                             '/rest/room/' + this.ID,
@@ -111,12 +105,10 @@
                                 if (!ans) {
                                     alert('sorry, slot already taken!')
                                 };
-                                vueapp.get_room();
                             }
                         )
                     },
                     cancel_room: function(ID){
-                        let vueapp = this; // fuck js!
                         fetch (
                             '/rest/room/' + ID,
                             {
@@ -132,12 +124,18 @@
                                 if (!ans) {
                                     alert('sorry, this didnt work :(!')
                                 };
-                                vueapp.get_room();
                             }
                         )
                     },
                 },
-                mounted: function() { this.get_room(); },
+                mounted: function() { 
+                    this.get_room(); 
+                    this.socket.on('update', (data) => {
+                        if (this.ID == data.room_id) {
+                            this.get_room();
+                        }
+                    });
+                },
                 filters: {
                     username: function (x) {
                         let temp = x.split('@')[0];
