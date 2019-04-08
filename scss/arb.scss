@@ -6,9 +6,12 @@
 h1, h2, h3, h4 {
     font-family: 'Montserrat', sans-serif;
 }
-button {
+.button, button {
+    display: inline-block;
     font-size: 2rem;
     font-weight: bold;
+    text-decoration: none;
+    color: black;
     border: none;
     padding: 0.5rem 1rem;
     margin-right: 0.5rem;
