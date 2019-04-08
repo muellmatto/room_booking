@@ -91,11 +91,11 @@ def booking_book(person, room_id, iso_date, period):
             )
     return _db_commit()
 
-def booking_cancel(ID, user):
+def booking_cancel(ID, user, admin=False):
     booking = Booking.query.filter_by(ID=ID).first()
     if booking is None:
         return False, -1
-    if not booking.person == user:
+    if not (booking.person == user or admin):
         return False, -1
     db.session.delete(booking)
     return _db_commit(), booking.room_id
@@ -269,13 +269,15 @@ def home():
 @app.route('/rooms')
 @logged_in
 def view_rooms():
-    return render_template('rooms_view.html')
+    admin = 'admin' in session
+    return render_template('rooms_view.html', admin=admin)
 
 @app.route('/room/<ID>')
 @logged_in
 def view_room(ID):
     user = session['user']
-    return render_template('room_view.html', ID=ID, user=user)
+    admin = 'admin' in session
+    return render_template('room_view.html', ID=ID, user=user, admin=admin)
 
 @app.route('/rest/room')
 @logged_in
@@ -304,7 +306,8 @@ def book_room(ID):
 @logged_in
 def cancel_room(ID):
     user = session['user']
-    success, room_id = booking_cancel(ID, user)
+    admin = 'admin' in session
+    success, room_id = booking_cancel(ID, user, admin)
     if success:
         socketio.emit('update', {'room_id': room_id}, json=True)
         return jsonify(True)
