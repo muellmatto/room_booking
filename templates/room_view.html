@@ -9,8 +9,9 @@
         <script src="{{ url_for('static', filename='socket.io.js') }}"></script>
     </head>
     <body>
+        {{admin}}
         {% raw %}
-            <a href="/">Zurück zur Übersicht</a>
+            <a class="button" style="font-size:0.8rem;" href="/">Zurück zur Übersicht</a>
             <div id="timetable">
             <h1>{{room.name}}</h1>
                 <button @click="week_offset -= 1 ; get_room();">←</button>
