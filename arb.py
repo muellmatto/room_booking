@@ -232,7 +232,8 @@ def login():
             session.permanent = True
             # ADMIN!
             session['admin'] = user
-            return redirect(url_for('admin'))
+            session['user'] = user
+            return redirect(url_for('home'))
         elif imap_auth(username=user,password=pw):
             session.permanent = True
             session['user'] = user.lower()
