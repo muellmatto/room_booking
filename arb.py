@@ -257,7 +257,7 @@ def login():
 def logout():
     if 'admin' in session:
         session.pop('admin', None)
-    else:
+    if 'user' in session:
         session.pop('user', None)
     return redirect(url_for('home'))
 
