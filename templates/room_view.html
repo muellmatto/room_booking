@@ -9,7 +9,9 @@
         <script src="{{ url_for('static', filename='socket.io.js') }}"></script>
     </head>
     <body>
-        {{admin}}
+        {% if admin %}
+            <h2 style="background: red;">ADMIN</h2>
+        {% endif %}
         {% raw %}
             <a class="button" style="font-size:0.8rem;" href="/">Zurück zur Übersicht</a>
             <div id="timetable">
@@ -36,9 +38,16 @@
                                 <br>
                                 (cancel)
                             </div>
-                            <div v-if="period.ID && period.person != user"
+                            <div v-if="period.ID && period.person != user && admin != true"
                                  class="period booked">
                                 {{j+1}}
+                                <br>
+                                 {{ period.person | username }}
+                            </div>
+                            <div v-if="period.ID && period.person != user && admin == true"
+                                 class="period booked"
+                                 @click="cancel_room(period.ID)">
+                                {{j+1}} (cancel)
                                 <br>
                                  {{ period.person | username }}
                             </div>
@@ -56,6 +65,7 @@
                 el: '#timetable',
                 data: {
                     room: [],
+                    admin: {{admin|tojson}},
                     ID: {{ID}}, 
                     user: "{{user}}",
                     week_offset: 0,
