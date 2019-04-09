@@ -338,12 +338,11 @@ def admin():
             success = room_add(title)
     return render_template('admin.html', rooms=room_getall())
 
-# we may need this:
-@app.route('/admin/qr')
+
+@app.route('/admin/qr/<int:roomd_id>')
 @admin_only
 def qr():
-    url_quoted = request.args.get('url')
-    qr_content = unquote(url_quoted)
+    qr_content = url_for('room_view', ID=room_id)
     output = BytesIO()
     qr = qrcode.make(qr_content)
     qr.save(output, format="PNG")
