@@ -193,6 +193,7 @@ def room_getall():
                 }
             for room in rooms
     ]
+    rooms.sort(key = lambda x: x['title'])
     return rooms
 
 # session controller
