@@ -27,6 +27,11 @@
                         <label for="room_id">Beschreibung:</label>
                         <br>
                         <textarea name="description">{{ room.description }}</textarea>
+                        <a href="{{ url_for('qr', room_id=room.ID) }}" target="_blank">
+                            <img style="display: inline-block; width: 3rem;"
+                            src="{{ url_for('qr', room_id=room.ID) }}"/>
+                        </a>
+                        <br>
                         <input type="submit" value="save">
                     </form>
                         <form method="POST"

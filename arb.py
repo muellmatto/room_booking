@@ -36,7 +36,8 @@ try:
             secret_key,
             allowed_domain,
             imap_host,
-            imap_port
+            imap_port,
+            production_url
     )
 except:
     print('please check config.py')
@@ -341,15 +342,15 @@ def admin():
     return render_template('admin.html', rooms=room_getall())
 
 
-@app.route('/admin/qr/<int:roomd_id>')
+@app.route('/admin/qr/<int:room_id>')
 @admin_only
-def qr():
-    qr_content = url_for('room_view', ID=room_id)
+def qr(room_id):
+    qr_content = 'https://{}{}'.format(production_url, url_for('view_room', ID=room_id))
     output = BytesIO()
-    qr = qrcode.make(qr_content)
+    qr = make_qrcode(qr_content)
     qr.save(output, format="PNG")
     output.seek(0)
     return send_file(output, mimetype="image/png")
 
 if __name__ == '__main__':
-    socketio.run(app, host='localhost', port=8000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=8000, debug=True)
