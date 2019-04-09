@@ -4,6 +4,7 @@ from datetime import (
 )
 from functools import wraps
 from imaplib import IMAP4_SSL
+from io import BytesIO
 from json import dumps as dump_json
 from math import floor
 from os.path import dirname, exists, join, realpath, isfile, isdir
@@ -18,6 +19,7 @@ from flask import (
         request,
         session, 
         redirect,
+        send_file,
         render_template,
         url_for
         )
