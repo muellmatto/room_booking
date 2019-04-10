@@ -7,6 +7,7 @@ from imaplib import IMAP4_SSL
 from io import BytesIO
 from json import dumps as dump_json
 from math import floor
+from markdown import markdown
 from os.path import dirname, exists, join, realpath, isfile, isdir
 from os import listdir, mkdir, remove, rmdir
 from sys import exit
@@ -195,7 +196,8 @@ def room_getall():
                     "ID": room.ID,
                     "title": room.title,
                     "location": room.location,
-                    "description": room.description
+                    "description": room.description,
+                    "description_html": markdown(room.description)
                 }
             for room in rooms
     ]
@@ -206,7 +208,10 @@ def room_getall():
 def imap_auth(username, password):
     username = username.lower()
     if not username.endswith(allowed_domain):
-        return False
+        if not '@' in username:
+            username = "@".join([username, allowed_domain])
+        else:
+            return False
     with IMAP4_SSL(host=imap_host, port=imap_port) as M:
         try:
             M.login(username, password)
@@ -338,10 +343,12 @@ def socket_emit_room_data(room_id, week_offset):
 
 
 @socketio.on('get_data')
+@logged_in
 def socket_get_data(room_id, week_offset):
     socket_emit_room_data(room_id, week_offset)
 
 @socketio.on('cancel')
+@logged_in
 def socket_cancel(booking_id, room_id, week_offset):
     user = session['user']
     admin = 'admin' in session
@@ -349,6 +356,7 @@ def socket_cancel(booking_id, room_id, week_offset):
     socket_emit_room_data(room_id, week_offset)
 
 @socketio.on('update')
+@logged_in
 def socket_update(room_id, iso_date, period, week_offset):
     person = session['user']
     if booking_book(person=person, room_id=room_id, iso_date=iso_date, period=period):

@@ -306,7 +306,7 @@ template {
 * {
   font-family: 'Slabo 27px', serif; }
 
-h1, h2, h3, h4 {
+h1, h2, h3, h4, h5 {
   font-family: 'Montserrat', sans-serif; }
 
 .button, button {
@@ -324,6 +324,7 @@ h1, h2, h3, h4 {
   box-shadow: 0.1rem 0.1rem 0.2rem -0.1rem black; }
 
 .card {
+  color: black;
   background: #fe9a06;
   padding: 1rem;
   box-sizing: border-box;
@@ -332,10 +333,13 @@ h1, h2, h3, h4 {
   margin: 0.25rem;
   float: left;
   height: 10rem;
-  border-radius: 0.7rem; }
-
-.card a {
+  border-radius: 0.7rem;
   text-decoration: none; }
+  .card h2, .card h4, .card p, .card ul {
+    margin-top: 0rem;
+    margin-bottom: 0.3rem; }
+  .card p, .card ul {
+    font-size: 0.9rem; }
 
 .card h3 {
   color: black;
