@@ -3,12 +3,11 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
         <title>ARB</title>
-        <!-- development version, includes helpful console warnings -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='arb.css') }}" type="text/css">
         <script src="{{ url_for('static', filename='vue.js') }}"></script>
-        <!-- production version, optimized for size and speed -->
-        <!-- script src="https://cdn.jsdelivr.net/npm/vue"></script -->
     </head>
     <body>
+        <a class="button" style="font-size:0.8rem;" href="/">Zurück zur Übersicht</a>
         <h1>Räume / Koffer </h1>
         <ul>
             {% for room in rooms %}
@@ -26,7 +25,7 @@
                         <br>
                         <label for="room_id">Beschreibung:</label>
                         <br>
-                        <textarea name="description">{{ room.description }}</textarea>
+                        <textarea rows="4" name="description">{{ room.description }}</textarea>
                         <a href="{{ url_for('qr', room_id=room.ID) }}" target="_blank">
                             <img style="display: inline-block; width: 3rem;"
                             src="{{ url_for('qr', room_id=room.ID) }}"/>
