@@ -144,7 +144,13 @@ def get_week_data(room_id, week_offset=0):
         day_num = b['day_num'] - 1 # list index begins with 0
         period = b['period'] - 1 # ...
         data[day_num]['periods'][period] = b
-    return {'timetable': data, 'today': week['today'].isoformat(), 'name': room_get(room_id)['title'], 'week_num': week['start'].isocalendar()[1] }
+    return {
+        'room_id': room_id,
+        'timetable': data,
+        'today': week['today'].isoformat(),
+        'name': room_get(room_id)['title'],
+        'week_num': week['start'].isocalendar()[1]
+    }
     # return {"days": week['days'], "today": week['today'].isoformat(), "bookings": bookings, "week_offset": week_offset }
 
 def booking_getall():
@@ -318,9 +324,35 @@ def cancel_room(ID):
         return jsonify(True)
     return jsonify(False)
 
+def socket_emit_room_data(room_id, week_offset):
+    week_offset = int(week_offset)
+    socketio.emit(
+            'room_data',
+            get_week_data(
+                room_id = room_id,
+                week_offset = week_offset
+            ),
+            json = True
+    )
+
+
+
+@socketio.on('get_data')
+def socket_get_data(room_id, week_offset):
+    socket_emit_room_data(room_id, week_offset)
+
+@socketio.on('cancel')
+def socket_cancel(booking_id, room_id, week_offset):
+    user = session['user']
+    admin = 'admin' in session
+    success, room_id = booking_cancel(booking_id, user, admin)
+    socket_emit_room_data(room_id, week_offset)
+
 @socketio.on('update')
-def socket_update(data):
-    print(data)
+def socket_update(room_id, iso_date, period, week_offset):
+    person = session['user']
+    if booking_book(person=person, room_id=room_id, iso_date=iso_date, period=period):
+        socket_emit_room_data(room_id, week_offset)
 
 @app.route('/admin', methods=['GET', 'POST'])
 @admin_only
