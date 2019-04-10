@@ -82,68 +82,38 @@
                 },
                 methods: {
                     get_room: function () {
-                        let vueapp = this; // fuck js!
-                        fetch('/rest/room/' + this.ID + '/week_offset/' + this.week_offset,  {credentials: 'same-origin'})
-                            .then(
-                                function(res) {
-                                    return res.json()
-                                }
-                            )
-                            .then(
-                                function(data) {
-                                    vueapp.room = data;
-                                }
-                            )
+                        this.socket.emit(
+                            'get_data',
+                            room_id = this.ID,
+                            week_offset = this.week_offset
+                        );
                     },
                     book_room: function (iso_date, period){
-                        let data = {period: period, iso_date: iso_date}
-                        fetch (
-                            '/rest/room/' + this.ID,
-                            {
-                                method: "POST",
-                                credentials: "same-origin",
-                                headers : {
-                                    "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify(data)
-                            }
-                        ).then(
-                            function(res) {
-                                return res.json()
-                            }
-                        ).then(
-                            function(ans) {
-                                if (!ans) {
-                                    alert('sorry, slot already taken!')
-                                };
-                            }
+                        this.socket.emit(
+                            'update',
+                            room_id = this.ID,
+                            iso_date = iso_date,
+                            period = period,
+                            week_offset = this.week_offset
                         )
                     },
                     cancel_room: function(ID){
-                        fetch (
-                            '/rest/room/' + ID,
-                            {
-                                method: "DELETE",
-                                credentials: "same-origin",
-                            }
-                        ).then(
-                            function(res) {
-                                return res.json()
-                            }
-                        ).then(
-                            function(ans) {
-                                if (!ans) {
-                                    alert('sorry, this didnt work :(!')
-                                };
-                            }
+                        this.socket.emit(
+                            'cancel',
+                            booking_id = ID,
+                            room_id = this.ID,
+                            week_offset = this.week_offset
                         )
                     },
                 },
                 mounted: function() { 
-                    this.get_room(); 
-                    this.socket.on('update', (data) => {
+                    this.socket.on('connect', (data) => {
+                        console.log('connected, fetching room data');
+                        this.get_room();
+                    });
+                    this.socket.on('room_data', (data) => {
                         if (this.ID == data.room_id) {
-                            this.get_room();
+                            this.room = data;
                         }
                     });
                 },

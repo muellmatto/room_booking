@@ -19,8 +19,10 @@
             <div id="app" class="cards">
                 <a v-for="room in rooms" v-bind:href="'/room/'+room.ID">
                     <div class="card">
-                        <h3>{{ room.title }}</h3>
-                        <p>{{ room.location }}</p>
+                        <h2>{{ room.title }}</h2>
+                        <h4>{{ room.location }}</h4>
+                        <div v-html="room.description_html">
+                        </div>
                     </div>
                 </a>
             </div>
