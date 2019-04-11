@@ -3,6 +3,9 @@
 * {
     font-family: 'Slabo 27px', serif;
 }
+body {
+    padding: 0.3rem;
+}
 h1, h2, h3, h4, h5 {
     font-family: 'Montserrat', sans-serif;
 }
@@ -42,12 +45,16 @@ input:focus, textarea:focus {
     height: 10rem;
     border-radius: 0.7rem;
     text-decoration: none;
+    word-break: break-word;
     h2, h4, p, ul {
         margin-top: 0rem;
         margin-bottom: 0.3rem;
     }
     h2, h4 {
         font-weight: bold;
+    }
+    h2 {
+        font-size: 1.2rem;
     }
     div {
         font-size: 0.9rem;

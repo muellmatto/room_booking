@@ -11,10 +11,13 @@
         <!-- script src="https://cdn.jsdelivr.net/npm/vue"></script -->
     </head>
     <body>
-        {% if admin %}
-            <a class="button" style="font-size: 0.9rem"
-                  href="{{url_for('admin')}}">Räume bearbeiten</a>
-        {% endif %}
+        <p style="clear: left;">
+            <a style="font-size: 0.9rem; margin-left: 0.5rem;" class="button" href="{{url_for('logout')}}">LOGOUT</a>
+            {% if admin %}
+                <a class="button" style="font-size: 0.9rem"
+                      href="{{url_for('admin')}}">Räume bearbeiten</a>
+            {% endif %}
+        </p>
         {% raw %}
             <div id="app" class="cards">
                 <a v-for="room in rooms" v-bind:href="'/room/'+room.ID">
@@ -27,9 +30,6 @@
                 </a>
             </div>
         {% endraw %}
-        <p style="clear: left;">
-            <a style="font-size: 0.9rem; margin-left: 0.5rem;" class="button" href="{{url_for('logout')}}">LOGOUT</a>
-        </p>
         <script>
             var app = new Vue({
                 el: '#app',
