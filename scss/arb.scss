@@ -6,6 +6,16 @@
 h1, h2, h3, h4, h5 {
     font-family: 'Montserrat', sans-serif;
 }
+input, textarea {
+    border: 0.1rem solid #fe9a06;
+    box-shadow: inset 0rem 0.1rem 0.2rem #ddd;
+    border-radius: 0.3rem;
+    width: 16rem;
+    padding: 0.3rem;
+}
+input:focus, textarea:focus {
+    border-color: #129FEA;
+}
 .button, button {
     display: inline-block;
     font-size: 2rem;
@@ -36,18 +46,15 @@ h1, h2, h3, h4, h5 {
         margin-top: 0rem;
         margin-bottom: 0.3rem;
     }
-    p, ul {
-        font-size: 0.9rem;
+    h2, h4 {
+        font-weight: bold;
     }
-}
-.card  h3 {
-    color: black;
-    text-decoration: none;
-    font-weight: bold;
-}
-.card p {
-    color: rgba(44,44,44, 1);
-    text-decoration: none;
+    div {
+        font-size: 0.9rem;
+        color: rgba(66,66,66, 1);
+        height: 5rem;
+        overflow: auto;
+    }
 }
 .timetable {
     display: flex;

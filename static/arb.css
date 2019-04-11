@@ -309,6 +309,16 @@ template {
 h1, h2, h3, h4, h5 {
   font-family: 'Montserrat', sans-serif; }
 
+input, textarea {
+  border: 0.1rem solid #fe9a06;
+  box-shadow: inset 0rem 0.1rem 0.2rem #ddd;
+  border-radius: 0.3rem;
+  width: 16rem;
+  padding: 0.3rem; }
+
+input:focus, textarea:focus {
+  border-color: #129FEA; }
+
 .button, button {
   display: inline-block;
   font-size: 2rem;
@@ -338,17 +348,13 @@ h1, h2, h3, h4, h5 {
   .card h2, .card h4, .card p, .card ul {
     margin-top: 0rem;
     margin-bottom: 0.3rem; }
-  .card p, .card ul {
-    font-size: 0.9rem; }
-
-.card h3 {
-  color: black;
-  text-decoration: none;
-  font-weight: bold; }
-
-.card p {
-  color: #2c2c2c;
-  text-decoration: none; }
+  .card h2, .card h4 {
+    font-weight: bold; }
+  .card div {
+    font-size: 0.9rem;
+    color: #424242;
+    height: 5rem;
+    overflow: auto; }
 
 .timetable {
   display: flex;

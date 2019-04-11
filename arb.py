@@ -253,21 +253,7 @@ def login():
             session.permanent = True
             session['user'] = user.lower()
             return redirect(url_for('home'))
-    return '''
-        <!DOCTYPE html>
-        <html>
-            <head>
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            </head>
-            <body>
-                <form action="" method="post">
-                    <p><input type=text name=username placeholder="username">
-                    <p><input type=password name=password placeholder="password">
-                    <p><input type=submit value=Login>
-                </form>
-            </body>
-        </html>
-    '''
+    return render_template('login.html')
 
 @app.route('/logout')
 def logout():
