@@ -15,7 +15,8 @@
         {% raw %}
             <a class="button" style="font-size:0.8rem;" href="/">Zurück zur Übersicht</a>
             <div id="timetable">
-            <h1>{{room.name}}</h1>
+            <h1 v-bind:class="'card_bg' + room.room_data.color_index">{{room.room_data.title}}</h1>
+            <h5 v-bind:class="'card_bg' + room.room_data.color_index">{{room.room_data.location}}</h5>
                 <button @click="week_offset -= 1 ; get_room();">←</button>
                 <button @click="week_offset=0;get_room();">⌂</button>
                 <button @click="week_offset += 1; get_room();">→</button>

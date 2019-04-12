@@ -151,7 +151,7 @@ def get_week_data(room_id, week_offset=0):
         'room_id': room_id,
         'timetable': data,
         'today': week['today'].isoformat(),
-        'name': room_get(room_id)['title'],
+        'room_data': room_get(room_id),
         'week_num': week['start'].isocalendar()[1]
     }
     # return {"days": week['days'], "today": week['today'].isoformat(), "bookings": bookings, "week_offset": week_offset }
@@ -187,6 +187,7 @@ def room_get(ID=None):
             "ID": room.ID,
             "title": room.title,
             "location": room.location,
+            "color_index": room.color_index,
             "description": room.description
     }
     return room
