@@ -19,6 +19,19 @@
                         <br>
                         <input type="text" name="title" value="{{ room.title }}">
                         <br>
+                        Farbe:
+                            {% for i in range(NUM_COLORS) %}
+                                <input
+                                    type="radio"
+                                    name="color_index"
+                                    value="{{i}}"
+                                    class="card_bg{{i}}"
+                                    {% if i == room.color_index %}
+                                        checked="checked"
+                                    {% endif %}
+                                />
+                            {% endfor %}
+                        <br>
                         <label for="room_id">Ort:</label>
                         <br>
                         <input type="text" name="location" value="{{ room.location }}">

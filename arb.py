@@ -49,6 +49,7 @@ app.secret_key = secret_key
 
 PATH = dirname(realpath(__file__))
 DB_PATH = join(PATH, 'arb.sqlite3')
+NUM_COLORS = 5
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + DB_PATH
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -62,6 +63,7 @@ class Room(db.Model):
     title = db.Column(db.String(), nullable=False)
     location = db.Column(db.String(), default='')
     description = db.Column(db.String(), default='')
+    color_index = db.Column(db.Integer, default=0)
     bookings = db.relationship('Booking', backref='Booking', lazy=True, cascade='all, delete-orphan')
 
 class Booking(db.Model):
@@ -197,6 +199,7 @@ def room_getall():
                     "title": room.title,
                     "location": room.location,
                     "description": room.description,
+                    "color_index": room.color_index,
                     "description_html": markdown(room.description)
                 }
             for room in rooms
@@ -366,7 +369,7 @@ def admin():
         elif action == 'create':
             title = form.pop('title')
             success = room_add(title)
-    return render_template('admin.html', rooms=room_getall())
+    return render_template('admin.html', rooms=room_getall(), NUM_COLORS = NUM_COLORS)
 
 
 @app.route('/admin/qr/<int:room_id>')

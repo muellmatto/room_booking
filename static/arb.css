@@ -1,3 +1,4 @@
+@charset "UTF-8";
 /*! normalize.css v8.0.1 | MIT License | github.com/necolas/normalize.css */
 /* Document
    ========================================================================== */
@@ -338,7 +339,6 @@ input:focus, textarea:focus {
 
 .card {
   color: black;
-  background: #fe9a06;
   padding: 1rem;
   box-sizing: border-box;
   width: 15rem;
@@ -361,6 +361,40 @@ input:focus, textarea:focus {
     color: #424242;
     height: 5rem;
     overflow: auto; }
+
+input[type="radio"] {
+  width: 0;
+  margin-left: 2rem; }
+
+input[type='radio']:after {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.2rem;
+  content: '';
+  display: inline-block;
+  visibility: visible;
+  box-shadow: 0.1rem 0.1rem 0.2rem -0.1rem black; }
+
+input[type='radio']:checked:after {
+  content: '✓';
+  content: '✗';
+  text-align: center;
+  text-shadow: 0.1rem 0.1rem 0.1rem white; }
+
+.card_bg0, .card_bg0:after {
+  background: #fe9a06; }
+
+.card_bg1, .card_bg1:after {
+  background: #ff7b7b; }
+
+.card_bg2, .card_bg2:after {
+  background: #9494f5; }
+
+.card_bg3, .card_bg3:after {
+  background: #ffff85; }
+
+.card_bg4, .card_bg4:after {
+  background: #c0ffcf; }
 
 .timetable {
   display: flex;
