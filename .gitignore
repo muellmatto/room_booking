@@ -1,4 +1,3 @@
-config.py
 venv
 __pycache__
 arb.sqlite3

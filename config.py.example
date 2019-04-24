@@ -1,7 +1,0 @@
-username = "admin"
-password = "admin"
-secret_key = "usrhgcneiuhnceiurnhwo87ghuwhcngniwgh"
-imap_host= "woof.woof" 
-imap_port = 993
-allowed_domain = "woof.woof"
-production_url = "localhost:8000"

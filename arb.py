@@ -238,4 +238,4 @@ def qr(room_id):
     return send_file(output, mimetype="image/png")
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=8000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=8000, debug=False)
