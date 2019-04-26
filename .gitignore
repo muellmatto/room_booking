@@ -1,3 +1,5 @@
 venv
 __pycache__
 arb.sqlite3
+config.py
+.sass-cache
