@@ -1,4 +1,3 @@
-from os import getenv
 username = "admin"
 password = "admin"
 secret_key = "usrhgcneiuhnceiurnhwo87ghuwhcngniwgh"
