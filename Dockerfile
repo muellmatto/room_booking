@@ -4,7 +4,7 @@ RUN mkdir /app
 RUN mkdir /app/static
 RUN mkdir /app/templates
 ADD arb.py /app
-ADD config.py /app
+ADD config.py.docker /app/config.py
 ADD LICENSE /app
 ADD models.py /app
 ADD requirements.txt /app
