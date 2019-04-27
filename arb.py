@@ -3,7 +3,14 @@ from imaplib import IMAP4_SSL
 from io import BytesIO
 from json import dumps as dump_json
 from math import floor
-from os.path import dirname, join, realpath
+from os import mkdir
+from os.path import (
+        dirname,
+        isdir,
+        isfile,
+        join,
+        realpath
+        )
 from sys import exit
 from urllib.parse import unquote
 
@@ -35,7 +42,7 @@ from models import (
         )
 
 try:
-    from config import (
+    from config.config import (
             username,
             password,
             secret_key,
@@ -52,7 +59,7 @@ app = Flask(__name__)
 app.secret_key = secret_key
 
 PATH = dirname(realpath(__file__))
-DB_PATH = join(PATH, 'arb.sqlite3')
+DB_PATH = join(PATH, 'db', 'arb.sqlite3')
 NUM_COLORS = 5
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + DB_PATH
@@ -62,6 +69,14 @@ socketio = SocketIO(app)
 
 # init db models
 db.init_app(app)
+
+if not isdir(join(PATH, 'db')):
+    mkdir(join(PATH, 'db'))
+
+if not isfile(DB_PATH):
+    with app.app_context():
+        db.create_all()
+
 # session controller
 def imap_auth(username, password):
     username = username.lower()
