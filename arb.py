@@ -65,7 +65,7 @@ NUM_COLORS = 5
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + DB_PATH
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins = '*')
 
 # init db models
 db.init_app(app)
@@ -108,7 +108,7 @@ def logged_in(wrapped):
         if 'user' in session:
             return wrapped(*args, **kwargs)
         else:
-            return redirect(url_for('login'))
+            return redirect(url_for('login', path=request.path))
     return arb_request
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -125,6 +125,9 @@ def login():
         elif imap_auth(username=user,password=pw):
             session.permanent = True
             session['user'] = user.lower()
+            path = request.args.get('path')
+            if path:
+                return redirect(path)
             return redirect(url_for('home'))
     return render_template('login.html')
 
@@ -253,4 +256,4 @@ def qr(room_id):
     return send_file(output, mimetype="image/png")
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=8000, debug=False)
+    socketio.run(app, host='0.0.0.0', port=8000, debug=True)
