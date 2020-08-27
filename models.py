@@ -99,6 +99,27 @@ def get_week_data(room_id, week_offset=0):
         day_num = b['day_num'] - 1 # list index begins with 0
         period = b['period'] - 1 # ...
         data[day_num]['periods'][period] = b
+
+    # block periods
+    day_array = ["mo", "di", "mi", "do", "fr"]
+    for day in Room.query.filter_by(ID=room_id).first().blocked.split(";"):
+        block_data = day.split(',')
+        if len(block_data) < 2 :
+            continue
+        day_name = block_data[0].strip().lower()
+        if not day_name in day_array:
+            continue
+        day_num = day_array.index(day_name)
+        for period in block_data[1:]:
+            if not period.isdigit():
+                continue
+            p = int(period)-1
+            data[day_num]['periods'][p] = {
+                'person': "BLOCKED",
+                'day_num': day_num,
+                'period': p
+            }
+
     return {
         'room_id': room_id,
         'timetable': data,

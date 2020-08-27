@@ -56,6 +56,11 @@
                                 @click="book_room(day.date, j+1)">
                                 {{j+1}}
                             </div>
+                            <div v-if="period.person=='BLOCKED'" class="period booked">
+                                {{j+1}}
+                                <br>
+                                BLOCKED
+                            </div>
                         </div>
                     </div>
                 </div>
