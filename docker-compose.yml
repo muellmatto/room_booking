@@ -1,0 +1,14 @@
+version: '3'
+services:
+  rooms:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: rooms
+    image: rooms:latest
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    volumes:
+      - ./db:/app/db
+      - ./config:/app/config
