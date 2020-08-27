@@ -1,4 +1,4 @@
-FROM python:3.7-alpine
+FROM python:3.8
 
 
 RUN mkdir /app
@@ -17,9 +17,7 @@ ADD templates /app/templates
 
 
 WORKDIR /app
-RUN apk add --no-cache --virtual .build-deps gcc musl-dev
 RUN pip install -r requirements.txt
-RUN apk del .build-deps
 
 RUN python -c "from arb import app, db ; app.app_context().push(); db.create_all()"
 
