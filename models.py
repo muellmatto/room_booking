@@ -17,6 +17,7 @@ class Room(db.Model):
     description = db.Column(db.String(), default='')
     color_index = db.Column(db.Integer, default=0)
     bookings = db.relationship('Booking', backref='Booking', lazy=True, cascade='all, delete-orphan')
+    blocked = db.Column(db.String(), default='')
 
 class Booking(db.Model):
     __table_args__ = (db.UniqueConstraint('date', 'period', 'room_id'),) # must be a tuple
@@ -135,7 +136,8 @@ def room_get(ID=None):
             "title": room.title,
             "location": room.location,
             "color_index": room.color_index,
-            "description": room.description
+            "description": room.description,
+            "blocked": room.blocked
     }
     return room
 
@@ -148,7 +150,8 @@ def room_getall():
                     "location": room.location,
                     "description": room.description,
                     "color_index": room.color_index,
-                    "description_html": markdown(room.description)
+                    "description_html": markdown(room.description),
+                    "blocked": room.blocked
                 }
             for room in rooms
     ]

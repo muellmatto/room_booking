@@ -44,6 +44,10 @@
                             src="{{ url_for('qr', room_id=room.ID) }}"/>
                         </a>
                         <br>
+                        <label for="blocked">beispiel: mo,2,9,10,11;mi,1;fr,2</label>
+                        <br>
+                        <input type="text" name="blocked" value="{{ room.blocked }}">
+                        <br>
                         <input type="submit" value="save">
                     </form>
                         <form method="POST"
