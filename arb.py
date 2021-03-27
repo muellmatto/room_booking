@@ -1,7 +1,8 @@
 from functools import wraps
+from hashlib import sha3_512
 from imaplib import IMAP4_SSL
 from io import BytesIO
-from json import dumps as dump_json
+import json
 from math import floor
 from os import mkdir
 from os.path import (
@@ -41,10 +42,53 @@ from models import (
         room_add
         )
 
+def get_admins_users():
+    with open('config/users.json') as json_file:
+        USER_DATA = json.load(json_file)
+        users = USER_DATA['users']
+        admins = USER_DATA['admins']
+    return admins, users
+
+def write_admins_users(admins, users):
+    USER_DATA = {
+        "info": "username(key) : password(sha3_512 hash). default passwd 'admin'=='5a38afb1a18d408e6cd367f9db91e2ab9bce834cdad3da24183cc174956c20ce35dd39c2bd36aae907111ae3d6ada353f7697a5f1a8fc567aae9e4ca41a9d19d' ",
+        "admins": admins,
+        "users": users
+    }
+    with open('config/users.json', 'w') as json_file:
+        json.dump(USER_DATA, json_file, sort_keys=True, indent=4)
+
+def user_delete(user, admin=False):
+    admins, users = get_admins_users()
+    if admin:
+        accounts = admins # this is a pointer! not a copy!!
+    else:
+        accounts = users
+    if user in accounts:
+        _ = accounts.pop(user)
+        write_admins_users(admins, users)
+        return True
+    return False
+
+def user_update(user, pw, admin=False):
+    admins, users = get_admins_users()
+    if admin:
+        accounts = admins # this is a pointer! not a copy!!
+    else:
+        accounts = users
+    pw_hash = sha3_512(pw.encode()).hexdigest()
+    accounts[user] = pw_hash
+    write_admins_users(admins, users)
+    return True
+
+def user_add(user, pw, admin=False):
+    admins, users = get_admins_users()
+    if user in admins or user in users:
+        return False
+    return user_update(user, pw, admin)
+
 try:
     from config.config import (
-            username,
-            password,
             secret_key,
             allowed_domain,
             imap_host,
@@ -53,6 +97,15 @@ try:
     )
 except:
     print('please check config.py')
+    exit(1)
+
+try:
+    admins, users = get_admins_users()
+    if not type(admins) == dict and not type(users) == dicts:
+        raise
+except Exception as e:
+    print(e)
+    print("please check users.json")
     exit(1)
 
 app = Flask(__name__)
@@ -76,21 +129,6 @@ if not isdir(join(PATH, 'db')):
 if not isfile(DB_PATH):
     with app.app_context():
         db.create_all()
-
-# session controller
-def imap_auth(username, password):
-    username = username.lower()
-    if not username.endswith(allowed_domain):
-        if not '@' in username:
-            username = "@".join([username, allowed_domain])
-        else:
-            return False
-    with IMAP4_SSL(host=imap_host, port=imap_port) as M:
-        try:
-            M.login(username, password)
-            return True
-        except:
-            return False
 
 # ----- SESSION
 def admin_only(wrapped):
@@ -116,19 +154,24 @@ def login():
     if request.method == 'POST':
         user = request.form['username']
         pw = request.form['password']
-        if request.form['username'] == username and request.form['password'] == password:
-            session.permanent = True
-            # ADMIN!
-            session['admin'] = user
-            session['user'] = user
-            return redirect(url_for('home'))
-        elif imap_auth(username=user,password=pw):
-            session.permanent = True
-            session['user'] = user.lower()
-            path = request.args.get('path')
-            if path:
-                return redirect(path)
-            return redirect(url_for('home'))
+        pw_hash = sha3_512(pw.encode()).hexdigest()
+        admins, users = get_admins_users()
+        # check for admin
+        if user in admins:
+            if admins[user] == pw_hash:
+                session.permanent = True
+                # ADMIN!
+                session['admin'] = user
+                session['user'] = user
+                return redirect(url_for('home'))
+        elif user in users:
+            if users[user] == pw_hash:
+                session.permanent = True
+                session['user'] = user.lower()
+                path = request.args.get('path')
+                if path:
+                    return redirect(path)
+                return redirect(url_for('home'))
     return render_template('login.html')
 
 @app.route('/logout')
@@ -244,6 +287,44 @@ def admin():
             success = room_add(title)
     return render_template('admin.html', rooms=room_getall(), NUM_COLORS = NUM_COLORS)
 
+@app.route('/users', methods=['GET', 'POST'])
+@admin_only
+def users():
+    if request.method == 'POST':
+        form = dict(request.form)
+        print(form)
+        action = form.pop('action', None)
+        admin = 'admin' in form
+        print(action)
+        print(admin)
+        print(type(admin))
+        if action == 'add_user':
+            username = form.pop('username')
+            password = form.pop('password')
+            print(username, password)
+            success = user_add(username, password, admin)
+            if success:
+                flash(f'{username} wurde erstellt')
+            else:
+                flash(f'admin oder user mit dem Namen {username} existiert bereits')
+        elif action == 'update_user':
+            username = form.pop('username')
+            password = form.pop('password')
+            print(username, password)
+            success = user_update(username, password, admin)
+            if success:
+                flash('aktualisiert')
+            else:
+                flash('irgendwas ist schief gelaufen :(')
+        elif action == 'delete_user':
+            username = form.pop('username')
+            success = user_delete(username, admin)
+            if success:
+                flash(username + ' gelöscht')
+            else:
+                flash('irgendwas ist schief gelaufen :(')
+    admins, users = get_admins_users()
+    return render_template('users.html', admins=admins, users=users)
 
 @app.route('/admin/qr/<int:room_id>')
 @admin_only

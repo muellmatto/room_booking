@@ -1,0 +1,82 @@
+<html lang="de">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+        <title>ARB</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='arb.css') }}" type="text/css">
+        <script src="{{ url_for('static', filename='vue.js') }}"></script>
+    </head>
+    <body>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul class=flashes>
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        <a class="button" style="font-size:0.8rem;" href="/">Zurück zur Übersicht</a>
+        <a class="button" style="font-size:0.8rem;" href="{{ url_for('admin') }}">Raumverwaltung</a>
+        <h1>ADMINS</h1>
+        <ul>
+            {% for admin in admins %}
+                <li>
+                    <strong>{{admin}}</strong> - 
+                    <form method="POST" style="display: inline-block;">
+                        <input type="hidden" name="username" value="{{admin}}">
+                        <input type="hidden" name="admin" value="True">
+                        <input type="hidden" name="action" value="update_user">
+                        <label for="password">neues Passwort:</label>
+                        <input type="password" name="password">
+                        <button type="submit" style="font-size:0.8rem;">ändern</button>
+                    </form>
+                    <form method="POST" style="display: inline-block;">
+                        <input type="hidden" name="username" value="{{admin}}">
+                        <input type="hidden" name="admin" value="True">
+                        <input type="hidden" name="action" value="delete_user">
+                        <button type="submit" style="font-size:0.8rem; background: red;">löschen!</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+        <hr>
+        <h1>USERS</h1>
+        <ul>
+            {% for user in users %}
+                <li>
+                    <strong>{{user}}</strong> - 
+                    <form method="POST" style="display: inline-block;">
+                        <input type="hidden" name="username" value="{{user}}">
+                        <input type="hidden" name="action" value="update_user">
+                        <label for="password">neues Passwort:</label>
+                        <input type="password" name="password">
+                        <button type="submit" style="font-size:0.8rem;">ändern</button>
+                    </form>
+                    <form method="POST" style="display: inline-block;">
+                        <input type="hidden" name="username" value="{{user}}">
+                        <input type="hidden" name="action" value="delete_user">
+                        <button type="submit" style="font-size:0.8rem; background: red;">löschen!</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+        <hr>
+        <form method="POST">
+            <h3>Neue User anlgen:</h3>
+            <label for="username">username:</label>
+            <input type="text" name="username" required>
+            <br>
+            <label for="password">password:</label>
+            <input type="password" name="password" required>
+            <br>
+            <br>
+            <input type="checkbox" name="admin">
+            <label for="admin">is ADMIN</label>
+            <br>
+            <br>
+            <input type="hidden" name="action" value="add_user">
+            <input type="submit" value="Erstellen">
+        </form>
+    </body>
+</html>

@@ -8,6 +8,7 @@
     </head>
     <body>
         <a class="button" style="font-size:0.8rem;" href="/">Zurück zur Übersicht</a>
+        <a class="button" style="font-size:0.8rem;" href="{{ url_for('users') }}">Benutzerverwaltung</a>
         <h1>Räume / Koffer </h1>
         <ul>
             {% for room in rooms %}
