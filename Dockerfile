@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3.9
 
 
 RUN mkdir /app
@@ -9,6 +9,7 @@ VOLUME /app/db
 
 ADD arb.py /app
 ADD config/config.py.docker /app/config/config.py
+ADD config/users.json /app/config/users.json
 ADD LICENSE /app
 ADD models.py /app
 ADD requirements.txt /app
