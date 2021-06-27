@@ -17,50 +17,60 @@
             <div id="timetable">
             <h1 v-bind:class="'card_bg' + room.room_data.color_index">{{room.room_data.title}}</h1>
             <h5 v-bind:class="'card_bg' + room.room_data.color_index">{{room.room_data.location}}</h5>
+                <span style="font-size: 1.4rem; font-weight: bold;">
+                    KW {{ room.calendar[0].week }}
+                    ({{ room.calendar[0].year }}) 
+                    bis
+                    KW {{ room.calendar[room.calendar.length -1].week }}
+                    ({{ room.calendar[room.calendar.length -1 ].year }})
+                </span>
+                <br>
                 <button @click="week_offset -= 1 ; get_room();">←</button>
                 <button @click="week_offset=0;get_room();">⌂</button>
                 <button @click="week_offset += 1; get_room();">→</button>
-                <span style="font-size: 1.4rem; font-weight: bold;">KW: {{room.week_num}}</span>
                 <hr>
                 <div class="timetable">
-                    <div class="day" v-for="day,i in room.timetable">
-                        <div class="period head">
-                            {{day_names[i]}}
-                            |
-                            {{day.date | datum}}
-                        </div>
-                        <div v-for="period,j in day.periods">
-                            <div v-if="period.person == user"
-                                 class="period me"
-                                 @click="cancel_room(period.ID)">
-                                {{j+1}}
+                    <div class="day">
+                        <div v-for="week in room.calendar">
+                            <div v-if="week.booked.person == user"
+                                class="period me"
+                                @click="cancel_room(week.booked.ID)">
+                                KW {{ week.week }}
+                                ({{ week.year }})
                                 <br>
-                                {{ period.person | username }}
+                                {{ week.first_date_of_week|datum }} - {{ week.last_date_of_week|datum }}
                                 <br>
-                                (cancel)
+                                Gebucht!
                             </div>
-                            <div v-if="period.ID && period.person != user && admin != true"
-                                 class="period booked">
-                                {{j+1}}
+                            <div v-else-if="week.booked.person && admin"
+                                class="period booked"
+                                @click="cancel_room(week.booked.ID)">
+                                KW {{ week.week }}
+                                ({{ week.year }})
                                 <br>
-                                 {{ period.person | username }}
-                            </div>
-                            <div v-if="period.ID && period.person != user && admin == true"
-                                 class="period booked"
-                                 @click="cancel_room(period.ID)">
-                                {{j+1}} (cancel)
+                                {{ week.first_date_of_week|datum }} - {{ week.last_date_of_week|datum }}
                                 <br>
-                                 {{ period.person | username }}
+                                Gebucht von: {{ week.booked.person }}
                             </div>
-                            <div v-if="!period.person" class="period free"
-                                @click="book_room(day.date, j+1)">
-                                {{j+1}}
-                            </div>
-                            <div v-if="period.person=='BLOCKED'" class="period booked">
-                                {{j+1}}
+                            <div v-else-if="week.booked.person"
+                                class="period booked">
+                                KW {{ week.week }}
+                                ({{ week.year }})
                                 <br>
-                                BLOCKED
+                                {{ week.first_date_of_week|datum }} - {{ week.last_date_of_week|datum }}
+                                <br>
+                                Gebucht von: {{ week.booked.person }}
                             </div>
+                            <div v-else
+                                class="period free"
+                                @click="book_room(week.year, week.week)">
+                                KW {{ week.week }}
+                                ({{ week.year }})
+                                <br>
+                                {{ week.first_date_of_week|datum }} - {{ week.last_date_of_week|datum }}
+                            </div>
+
+
                         </div>
                     </div>
                 </div>
@@ -75,15 +85,6 @@
                     ID: {{ID}}, 
                     user: "{{user}}",
                     week_offset: 0,
-                    day_names: [
-                        'MO',
-                        'DI',
-                        'MI',
-                        'DO',
-                        'FR',
-                        'SA',
-                        'SO',
-                    ],
                     socket: io(),
                 },
                 methods: {
@@ -94,12 +95,12 @@
                             week_offset = this.week_offset
                         );
                     },
-                    book_room: function (iso_date, period){
+                    book_room: function (year, week){
                         this.socket.emit(
                             'update',
                             room_id = this.ID,
-                            iso_date = iso_date,
-                            period = period,
+                            year = year,
+                            week = week,
                             week_offset = this.week_offset
                         )
                     },

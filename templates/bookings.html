@@ -1,0 +1,35 @@
+<html lang="de">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+        <title>ARB</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='arb.css') }}" type="text/css">
+        <script src="{{ url_for('static', filename='vue.js') }}"></script>
+    </head>
+    <body>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul class=flashes>
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        <a class="button" style="font-size:0.8rem;" href="/">Zurück zur Übersicht</a>
+        <a class="button" style="font-size:0.8rem;" href="{{ url_for('admin') }}">Raumverwaltung</a>
+        <h1>BUCHUNGEN</h1>
+        <ul>
+            {% for booking in bookings %}
+                <li>
+                    {{booking.date}}
+                    <br>
+                    {{booking.person}}
+                    <br>
+                    {{booking.room}}
+                </li>
+            {% endfor %}
+        </ul>
+    </body>
+</html>
+

@@ -413,13 +413,14 @@ input[type='radio']:checked:after {
   margin: 0.3rem; }
 
 .period {
-  width: 9rem;
-  height: 4rem;
+  min-height: 6rem;
   margin: 0.3rem;
   box-sizing: border-box;
-  padding: 0.5rem;
-  border-radius: 0.2rem;
-  font-size: 0.9rem; }
+  padding: 1rem;
+  border-radius: 0rem;
+  font-size: 0.9rem;
+  line-height: 1.4rem;
+  user-select: none; }
 
 .head {
   height: auto;

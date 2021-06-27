@@ -17,14 +17,12 @@ class Room(db.Model):
     description = db.Column(db.String(), default='')
     color_index = db.Column(db.Integer, default=0)
     bookings = db.relationship('Booking', backref='Booking', lazy=True, cascade='all, delete-orphan')
-    blocked = db.Column(db.String(), default='')
 
 class Booking(db.Model):
-    __table_args__ = (db.UniqueConstraint('date', 'period', 'room_id'),) # must be a tuple
-    # contraint -> unique in date, period and room_id
+    __table_args__ = (db.UniqueConstraint('date', 'room_id'),) # must be a tuple
+    # contraint -> unique in date and room_id
     ID = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, nullable=False)
-    period = db.Column(db.Integer, nullable=False)
     room_id = db.Column(db.Integer, db.ForeignKey('room.ID'), nullable=False)
     person = db.Column(db.String(), nullable=False)
 
@@ -37,16 +35,14 @@ def _db_commit():
         return False
 
 # DB controller
-def booking_book(person, room_id, iso_date, period):
-    y,m,d = map(int,iso_date.split('-')) 
-    db.session.add(
-            Booking(
-                person=person,
-                room_id=room_id,
-                date = Date(y,m,d),
-                period=period
-                )
-            )
+def booking_book(person, room_id, year, week):
+    target_date = Date.fromisocalendar(year=year, week=week, day=1)
+    new_booking = Booking(
+        person=person,
+        room_id=room_id,
+        date = target_date
+    )
+    db.session.add(new_booking)
     return _db_commit()
 
 def booking_cancel(ID, user, admin=False):
@@ -58,12 +54,6 @@ def booking_cancel(ID, user, admin=False):
     db.session.delete(booking)
     return _db_commit(), booking.room_id
 
-def _get_week_range(offset=0):
-    today = Date.today()
-    start_day = today - timedelta(today.isoweekday()-1 - offset*7)
-    end_day = today - timedelta(today.isoweekday()-7 - offset*7)
-    days = [(start_day + timedelta(i)).isoformat() for i in range(7)]
-    return {"today": today, "start": start_day, "end": end_day, "days": days}
 
 def _booking_get(room_id, start, end):
     booking = Booking.query.filter(
@@ -76,59 +66,59 @@ def _booking_get(room_id, start, end):
             {
                 'ID': b.ID,
                 'date': b.date.isoformat(),
-                'day_num': b.date.isoweekday(),
-                'period': b.period,
                 'room_id': b.room_id,
                 'person': b.person
             }
     for b in booking]
     return booking
 
-def get_week_data(room_id, week_offset=0):
-    week = _get_week_range(week_offset)                
-    # bookings = _booking_get(room_id, week['start'], week['end'])
-    # week['bookings'] = bookings
-    data = [ 
-            {
-                'day_num': i+1,
-                'date': day,
-                'periods' : [ {} for _ in range(11)]
-            } 
-    for i,day in enumerate(week['days'])]
-    for b in _booking_get(room_id, week['start'], week['end']):
-        day_num = b['day_num'] - 1 # list index begins with 0
-        period = b['period'] - 1 # ...
-        data[day_num]['periods'][period] = b
+def get_upcoming_bookings():
+    today = Date.today()
+    current_week = today.isocalendar().week
+    current_year = today.isocalendar().year
+    start_date = Date.fromisocalendar(year=current_year, week=current_week, day=1)
+    bookings = []
+    for booking in Booking.query.filter(
+            Booking.date.between(start_date, start_date+timedelta(weeks=6))
+        ):
+        bookings.append({
+            "person": booking.person,
+            "date": booking.date,
+            "room": Room.query.get(booking.room_id).title
+        })
+    return bookings[:]
 
-    # block periods
-    day_array = ["mo", "di", "mi", "do", "fr"]
-    if Room.query.filter_by(ID=room_id).first().blocked is not None:
-        for day in Room.query.filter_by(ID=room_id).first().blocked.split(";"):
-            block_data = day.split(',')
-            if len(block_data) < 2 :
-                continue
-            day_name = block_data[0].strip().lower()
-            if not day_name in day_array:
-                continue
-            day_num = day_array.index(day_name)
-            for period in block_data[1:]:
-                if not period.isdigit():
-                    continue
-                p = int(period)-1
-                data[day_num]['periods'][p] = {
-                    'person': "BLOCKED",
-                    'day_num': day_num,
-                    'period': p
-                }
+
+def get_calendar_data(room_id, week_offset=0):
+    NUM_WEEKS = 6
+    today = Date.today()
+    current_week = today.isocalendar().week
+    current_year = today.isocalendar().year
+    start_date = Date.fromisocalendar(year=current_year, week=current_week, day=1)
+    start_date += timedelta(weeks=week_offset*NUM_WEEKS)
+    calendar = [ 
+            {
+                'year': (start_date + timedelta(weeks=i)).isocalendar().year, 
+                'week': (start_date + timedelta(weeks=i)).isocalendar().week, 
+                'first_date_of_week': (start_date + timedelta(weeks=i)).isoformat(), 
+                'last_date_of_week': (start_date + timedelta(weeks=i, days=4)).isoformat(), 
+                'booked': {},
+            } 
+    for i in range(NUM_WEEKS)]
+
+    print ("wek")
+    for b in _booking_get(room_id, start_date, start_date+timedelta(weeks=NUM_WEEKS)):
+        print(b)
+        for i, week in enumerate(calendar):
+            if b['date'] == week['first_date_of_week']:
+                calendar[i]['booked'] = b
 
     return {
         'room_id': room_id,
-        'timetable': data,
-        'today': week['today'].isoformat(),
-        'room_data': room_get(room_id),
-        'week_num': week['start'].isocalendar()[1]
+        'calendar': calendar,
+        'offset': week_offset,
+        'room_data': room_get(room_id)
     }
-    # return {"days": week['days'], "today": week['today'].isoformat(), "bookings": bookings, "week_offset": week_offset }
 
 def room_edit(form_dict):
     ID = form_dict.pop('room_id')
@@ -159,7 +149,6 @@ def room_get(ID=None):
             "location": room.location,
             "color_index": room.color_index,
             "description": room.description,
-            "blocked": room.blocked
     }
     return room
 
@@ -173,7 +162,6 @@ def room_getall():
                     "description": room.description,
                     "color_index": room.color_index,
                     "description_html": markdown(room.description),
-                    "blocked": room.blocked
                 }
             for room in rooms
     ]

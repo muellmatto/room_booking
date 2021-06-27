@@ -33,7 +33,8 @@ from models import (
         db,
         Booking,
         Room,
-        get_week_data,
+        get_calendar_data,
+        get_upcoming_bookings,
         booking_book,
         booking_cancel,
         room_getall,
@@ -209,16 +210,16 @@ def rest_rooms():
 @logged_in
 def rest_room_booking(room_id,week_offset):
     week_offset = int(week_offset)
-    return jsonify(get_week_data(room_id=room_id, week_offset=week_offset))
+    return jsonify(get_calendar_data(room_id=room_id, week_offset=week_offset))
 
 @app.route('/rest/room/<ID>', methods=['POST'])
 @logged_in
 def book_room(ID):
     j = request.get_json()
-    period = j['period']
-    iso_date = j['iso_date']
+    year = j['year']
+    week = j['week']
     person = session['user']
-    if booking_book(person=person, room_id=ID, iso_date=iso_date, period=period):
+    if booking_book(person=person, room_id=ID, year=year, week=week):
         socketio.emit('update', {'room_id': ID}, json=True)
         return jsonify(True)
     return jsonify(False)
@@ -238,7 +239,7 @@ def socket_emit_room_data(room_id, week_offset):
     week_offset = int(week_offset)
     socketio.emit(
             'room_data',
-            get_week_data(
+            get_calendar_data(
                 room_id = room_id,
                 week_offset = week_offset
             ),
@@ -262,9 +263,9 @@ def socket_cancel(booking_id, room_id, week_offset):
 
 @socketio.on('update')
 @logged_in
-def socket_update(room_id, iso_date, period, week_offset):
+def socket_update(room_id, year, week, week_offset):
     person = session['user']
-    if booking_book(person=person, room_id=room_id, iso_date=iso_date, period=period):
+    if booking_book(person=person, room_id=room_id, year=year, week=week):
         socket_emit_room_data(room_id, week_offset)
 
 @app.route('/admin', methods=['GET', 'POST'])
@@ -286,6 +287,13 @@ def admin():
             title = form.pop('title')
             success = room_add(title)
     return render_template('admin.html', rooms=room_getall(), NUM_COLORS = NUM_COLORS)
+
+
+@app.route("/bookings", methods=['GET'])
+@admin_only
+def bookings():
+    return render_template("bookings.html", bookings=get_upcoming_bookings())
+
 
 @app.route('/users', methods=['GET', 'POST'])
 @admin_only
