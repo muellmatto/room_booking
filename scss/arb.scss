@@ -41,7 +41,7 @@ input:focus, textarea:focus {
     max-width: calc(50% - 0.5rem);
     margin: 0.25rem;
     float: left;
-    height: 10rem;
+    height: 20rem;
     border-radius: 0.7rem;
     text-decoration: none;
     word-break: break-word;
@@ -58,7 +58,6 @@ input:focus, textarea:focus {
     div {
         font-size: 0.9rem;
         color: rgba(66,66,66, 1);
-        height: 5rem;
         overflow: auto;
     }
 }
