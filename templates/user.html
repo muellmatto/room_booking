@@ -17,8 +17,8 @@ form {
         <form method=POST>
             <input type=hidden name=username value={{user.username}}>
             <h3>{{user.username}}</h3>
-            <label for=full_name>Vollständiger Name</label>
-            <input type=text id=full_name name=full_name value={{user.full_name}}>
+            <label for=full_name>Vollständiger Name: {{user.full_name}}</label>
+            <input type=text id=full_name name=full_name value="{{user.full_name}}">
             <label for=password>Neues Passwort:</label>
             <input type=password id=password name=password>
             <label for=info>Info:</label>
