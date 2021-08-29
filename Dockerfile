@@ -9,7 +9,6 @@ VOLUME /app/db
 
 ADD arb.py /app
 ADD config/config.py.docker /app/config/config.py
-ADD config/users.json /app/config/users.json
 ADD LICENSE /app
 ADD models.py /app
 ADD requirements.txt /app
