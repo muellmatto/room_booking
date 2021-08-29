@@ -1,0 +1,41 @@
+<html lang="de">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+        <title>ARB</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='arb.css') }}" type="text/css">
+        <script src="{{ url_for('static', filename='vue.js') }}"></script>
+<style>
+form {
+    display: grid;
+}
+</style>
+    </head>
+    <body>
+        <a class="button" style="font-size: 0.9rem"
+                      href="{{url_for('users')}}">Nutzerverwaltung</a>
+        <form method=POST>
+            <input type=hidden name=username value={{user.username}}>
+            <h3>{{user.username}}</h3>
+            <label for=full_name>Vollständiger Name</label>
+            <input type=text id=full_name name=full_name value={{user.full_name}}>
+            <label for=password>Neues Passwort:</label>
+            <input type=password id=password name=password>
+            <label for=info>Info:</label>
+            <textarea id="info" name="info" rows="10">{{user.info}}</textarea>
+            <label for=is_admin>admin?</label>
+            <input type=checkbox id=is_admin name="is_admin" {% if user.is_admin %}checked{% endif %}>
+            <button type=submit style="font-size: 1rem;">speichern</button>
+        </form>
+        <form
+            method="POST"
+            action="{{url_for('delete_user', username=user.username )}}"
+            onsubmit="return confirm('Wirklich löschen? Alle zugehörigen Buchungen werden auch gelöscht.');"
+            style="display: inline-block;"
+        >
+            <input type="hidden" name="username" value="{{user.username}}">
+            <button type="submit" style="font-size: 1rem; background: red;">löschen!</button>
+        </form>
+    </body>
+</html>
+

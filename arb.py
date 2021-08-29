@@ -31,8 +31,6 @@ from qrcode import make as make_qrcode
 
 from models import (
         db,
-        Booking,
-        Room,
         get_calendar_data,
         get_upcoming_bookings,
         booking_book,
@@ -40,53 +38,15 @@ from models import (
         room_getall,
         room_edit,
         room_delete,
-        room_add
+        room_add,
+        user_add,
+        user_edit,
+        user_delete,
+        user_get,
+        user_getall
         )
 
-def get_admins_users():
-    with open('config/users.json') as json_file:
-        USER_DATA = json.load(json_file)
-        users = USER_DATA['users']
-        admins = USER_DATA['admins']
-    return admins, users
 
-def write_admins_users(admins, users):
-    USER_DATA = {
-        "info": "username(key) : password(sha3_512 hash). default passwd 'admin'=='5a38afb1a18d408e6cd367f9db91e2ab9bce834cdad3da24183cc174956c20ce35dd39c2bd36aae907111ae3d6ada353f7697a5f1a8fc567aae9e4ca41a9d19d' ",
-        "admins": admins,
-        "users": users
-    }
-    with open('config/users.json', 'w') as json_file:
-        json.dump(USER_DATA, json_file, sort_keys=True, indent=4)
-
-def user_delete(user, admin=False):
-    admins, users = get_admins_users()
-    if admin:
-        accounts = admins # this is a pointer! not a copy!!
-    else:
-        accounts = users
-    if user in accounts:
-        _ = accounts.pop(user)
-        write_admins_users(admins, users)
-        return True
-    return False
-
-def user_update(user, pw, admin=False):
-    admins, users = get_admins_users()
-    if admin:
-        accounts = admins # this is a pointer! not a copy!!
-    else:
-        accounts = users
-    pw_hash = sha3_512(pw.encode()).hexdigest()
-    accounts[user] = pw_hash
-    write_admins_users(admins, users)
-    return True
-
-def user_add(user, pw, admin=False):
-    admins, users = get_admins_users()
-    if user in admins or user in users:
-        return False
-    return user_update(user, pw, admin)
 
 try:
     from config.config import (
@@ -94,20 +54,13 @@ try:
             allowed_domain,
             imap_host,
             imap_port,
-            production_url
+            production_url,
+            salt
     )
 except:
     print('please check config.py')
     exit(1)
 
-try:
-    admins, users = get_admins_users()
-    if not type(admins) == dict and not type(users) == dicts:
-        raise
-except Exception as e:
-    print(e)
-    print("please check users.json")
-    exit(1)
 
 app = Flask(__name__)
 app.secret_key = secret_key
@@ -153,25 +106,17 @@ def logged_in(wrapped):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        user = request.form['username']
-        pw = request.form['password']
-        pw_hash = sha3_512(pw.encode()).hexdigest()
-        admins, users = get_admins_users()
-        # check for admin
-        if user in admins:
-            if admins[user] == pw_hash:
-                session.permanent = True
-                # ADMIN!
-                session['admin'] = user
-                session['user'] = user
-                return redirect(url_for('home'))
-        elif user in users:
-            if users[user] == pw_hash:
-                session.permanent = True
-                session['user'] = user.lower()
-                path = request.args.get('path')
-                if path:
-                    return redirect(path)
+        username = request.form['username']
+        password = request.form['password']
+        user = user_get(username)
+        if user:
+            # user exists
+            if user.check_password(password):
+                # login successful!
+                session['user'] = user.username.lower()
+                if user.is_admin:
+                    # user is admin!
+                    session['admin'] = user.username.lower()
                 return redirect(url_for('home'))
     return render_template('login.html')
 
@@ -264,8 +209,8 @@ def socket_cancel(booking_id, room_id, week_offset):
 @socketio.on('update')
 @logged_in
 def socket_update(room_id, year, week, week_offset):
-    person = session['user']
-    if booking_book(person=person, room_id=room_id, year=year, week=week):
+    user = session['user']
+    if booking_book(user=user, room_id=room_id, year=year, week=week):
         socket_emit_room_data(room_id, week_offset)
 
 @app.route('/admin', methods=['GET', 'POST'])
@@ -299,40 +244,53 @@ def bookings():
 @admin_only
 def users():
     if request.method == 'POST':
-        form = dict(request.form)
-        print(form)
-        action = form.pop('action', None)
-        admin = 'admin' in form
-        print(action)
-        print(admin)
-        print(type(admin))
-        if action == 'add_user':
-            username = form.pop('username')
-            password = form.pop('password')
-            print(username, password)
-            success = user_add(username, password, admin)
-            if success:
-                flash(f'{username} wurde erstellt')
-            else:
-                flash(f'admin oder user mit dem Namen {username} existiert bereits')
-        elif action == 'update_user':
-            username = form.pop('username')
-            password = form.pop('password')
-            print(username, password)
-            success = user_update(username, password, admin)
-            if success:
-                flash('aktualisiert')
-            else:
-                flash('irgendwas ist schief gelaufen :(')
-        elif action == 'delete_user':
-            username = form.pop('username')
-            success = user_delete(username, admin)
-            if success:
-                flash(username + ' gelöscht')
-            else:
-                flash('irgendwas ist schief gelaufen :(')
-    admins, users = get_admins_users()
+        username = request.form.get('username')
+        password = request.form.get('password')
+        full_name = request.form.get('full_name')
+        info = request.form.get('info')
+        is_admin = "is_admin" in request.form
+        success = user_add(
+            username=username,
+            password=password,
+            full_name=full_name,
+            info=info,
+            is_admin=is_admin
+        )
+        if success:
+            flash(f'{username} wurde erstellt')
+        else:
+            flash(f'admin oder user mit dem Namen {username} existiert bereits')
+    users, admins = [], []
+    for user in user_getall():
+        if user.is_admin:
+            admins.append(user)
+        else:
+            users.append(user)
     return render_template('users.html', admins=admins, users=users)
+
+@app.route('/user/<username>', methods=['GET', 'POST'])
+@admin_only
+def user(username):
+    user = user_get(username)
+    if not user:
+        return redirect(url_for('users'))
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        full_name = request.form.get('full_name')
+        info = request.form.get('info')
+        is_admin = "is_admin" in request.form
+        user_edit(username=username, password=password, info=info, full_name=full_name, is_admin=is_admin)
+    return render_template('user.html', user=user)
+
+@app.route('/delete_user/<username>', methods=['POST'])
+@admin_only
+def delete_user(username):
+    if user_delete(username):
+        flash(f'{username} wurde gelöscht')
+    else:
+        flash(f'{username} konnte nicht gelöscht werden')
+    return redirect(url_for('users'))
 
 @app.route('/admin/qr/<int:room_id>')
 @admin_only
